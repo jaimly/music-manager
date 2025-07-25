@@ -19,11 +19,16 @@
           <el-space :size="10">
             <el-space :size="10">
               {{ node.label }}
-              <el-space>
-                <router-link :to="`/score/${node.score}`" v-if="node.level!=1">
+              <el-space style="display:flex; " :size="2">
+                <Upload v-if="node.level!=1 && !data.score && isLogin()"
+                  btnName="歌谱" :isBtnLink="true" :name="data.name" :id="data.id"
+                  :onSuccess="(score:string) => scoreEdit(data, score)"/>
+                <router-link :to="{ name: 'Score', state: {song: JSON.stringify({id: data.id, name: data.name, score: data.score})}}" 
+                      v-if="node.level!=1 && data.score">
                   <el-text type="primary">歌谱</el-text>
                 </router-link>
-                <router-link :to="`/lyrics/${node.score}`" v-if="node.level!=1">
+                <router-link :to="{ name: 'Lyrics', params: { id: data.id }}" 
+                      v-if="node.level!=1 ">
                   <el-text type="primary">歌词</el-text>
                 </router-link>
               </el-space>
@@ -59,14 +64,16 @@
     AllowDropType,
     NodeDropType,
   } from 'element-plus/es/components/tree/src/tree.type'
-  import { ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, isLogin } from '@/tools/api'
+  import { ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, ApiSongEdit, isLogin } from '@/tools/api'
   import ConfirmDialog from '@/views/comp/ConfirmDialog.vue'
+  import Upload from '@/views/comp/UploadScore.vue'
 
   interface Tree {
     id: string,
     name: string,
     order_num: number,
     category?: string,
+    score?: string,
     songs?: Tree[]
   }
 
@@ -103,7 +110,14 @@
   }
   
   //自定义节点
-
+  const scoreEdit = async (data: Tree, score: string) => {
+    await ApiSongEdit(data.id, {score})
+    .then(() => {
+      data.score = score
+      successInfo("上传成功！")
+    }).catch(alert);
+  }
+  
   const categoryAdd = async (node: Node, data: Tree) => {
     const newChild = await ApiCategoryCreate('新目录',data.order_num+1).catch(alert);
     newChild.songs = [];
@@ -189,6 +203,12 @@
     ElMessage({
       message: err.msg,
       type: 'warning'
+    })
+  }
+  function successInfo(message: string) {
+    ElMessage({
+      message,
+      type: 'success'
     })
   }
 </script>

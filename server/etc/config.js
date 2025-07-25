@@ -7,5 +7,8 @@ module.exports = {
         MYSQL_HOST: process.env.MYSQL_HOST || '',
         MYSQL_USER: process.env.MYSQL_USER || 'root',
         MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || ''
+    },
+    FILE_TYPE: {
+        SCORE: 'score'
     }
 }

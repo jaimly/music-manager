@@ -19,7 +19,7 @@ const schema = {
             type: "varchar",
             length: 100,
             nullable: false,
-            default: "product",
+            default: "score",
             comment: "分类"
         },
         path: {

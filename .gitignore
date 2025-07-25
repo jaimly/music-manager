@@ -16,6 +16,7 @@ coverage
 
 /cypress/videos/
 /cypress/screenshots/
+/res/score
 
 # Editor directories and files
 .vscode/launch.json

@@ -8,14 +8,16 @@ const routes = [
     component: () =>import('@/views/Main.vue')
   },
   {
-    path: '/score/:id', 
+    path: '/score', 
     name: 'Score',
-    component: () =>import('@/views/Score.vue')
+    component: () =>import('@/views/Score.vue'),
+    props: true
   },
   {
     path: '/lyrics/:id',
     name: 'Lyrics',
-    component: () =>import('@/views/Lyrics.vue')
+    component: () =>import('@/views/Lyrics.vue'),
+    props: true
   },
 ];
 

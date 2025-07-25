@@ -18,7 +18,6 @@ class File extends Base {
 
         for(let [key,val] of Object.entries(params)) {
             switch(key) {
-                case 'id':
                 case 'category':
                     params[key] = val.constructor == String ? val.split(',') : val;
                     break;
@@ -42,7 +41,7 @@ class File extends Base {
         const now = Date.now();
         opts.id = opts.id || utils.getID();
         opts.created_at = opts.created_at || now;
-        opts.category = opts.category || 'product';
+        opts.category = opts.category || 'score';
         opts.path = this.combileDbPath(opts);
         return super.toModel(opts);
     }

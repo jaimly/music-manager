@@ -104,6 +104,7 @@ cls.prototype.edit = async function (ctx) {
         },body),manager);
 
         if(!record.score && score) {
+            if(record.score) await File.deleteByPath(record.score);
             await File.updateByPath(score,{is_used: 1}, manager);
         }
 

@@ -49,8 +49,13 @@ async function ApiCategoryCreate(name,order_num) {
     return back;
 }
 
-async function ApiLyricsEdit(id, words) {
-    return post("/product/list", {id, words});
+async function ApiSongEdit(id, condition) {
+    const back = await post("/song/edit",Object.assign({id}, condition));
+    return back;
+}
+
+function ApiFileUploadUrl() {
+    return getApiFullUrl('/file/upload');
 }
 
 async function ApiLogin(password) {
@@ -173,6 +178,7 @@ export {
     ApiCategoryDelete,
     ApiSongCreate,
     ApiCategoryCreate,
-    ApiLyricsEdit,
+    ApiSongEdit,
+    ApiFileUploadUrl,
     globalError
 }

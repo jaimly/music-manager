@@ -1,5 +1,5 @@
 <template>
-    <el-button type="warning" class="float-button" @click="showBtnClick">
+    <el-button type="warning" class="global-float-button" @click="showBtnClick">
       {{ btnName }}
     </el-button>
 
@@ -40,6 +40,10 @@ import { isLogin, ApiLogin, ApiLogout } from '@/tools/api'
         isVisible.value = false
         isInfo.value = false
         btnName.value = '退出'
+        ElMessage({
+          message: "登录成功",
+          type: 'success'
+        })
       })
       .catch((err:ApiBackInfo) => isInfo.value = true)
   }
@@ -59,12 +63,4 @@ import { isLogin, ApiLogin, ApiLogout } from '@/tools/api'
 </script>
 
 <style scoped>
-.float-button {
-    position: absolute;
-    width: 60px;
-    /* left: 0; */
-    right:0;
-    /* margin: 0 auto; */
-    top: 10px;
-}
 </style>
