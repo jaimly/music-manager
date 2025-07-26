@@ -21,10 +21,10 @@
               <el-space :size="0">
                 <el-text v-if="titleEditId!=data.id" truncated>{{ node.label }}</el-text>
                 <el-button :icon="EditPen" type="text"
-                    v-if="titleEditId!=data.id" 
+                    v-if="isLogin() && titleEditId!=data.id" 
                     @click.stop="titleEditBefore(data)" />
                 <el-input v-model="titleInput"
-                    v-if="titleEditId==data.id" 
+                    v-if="isLogin() && titleEditId==data.id" 
                     @input="titleInput" @click.stop
                     class="title">
                   <template #append>
