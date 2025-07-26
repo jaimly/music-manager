@@ -74,11 +74,17 @@ cls.prototype.edit = async function (ctx) {
     await isPermission(ctx);
 
     const {body} = ctx.request;
-    const {id,order_num} = body;
-    const record = await Product.findOne({id});
+    const {id,name, order_num} = body;
+    const record = await Category.findOne({id});
 
     return Category.connector.transaction(async manager => {
-        if(order_num && order_num != record.order_num) await Category.updateOrder(order_num, true, manager);
+        if(order_num && order_num != record.order_num) {
+            await Category.updateOrder(order_num, true, manager);
+        }
+
+        if(name && name != record.name) {
+            await Song.update({category: record.name}, {category: name}, manager);
+        }
 
         await Category.update({id},Object.assign({
             updated_at: Date.now()

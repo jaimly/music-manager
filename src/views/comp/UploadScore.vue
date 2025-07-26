@@ -1,7 +1,7 @@
 <template>
     <el-upload
       :action="ApiFileUploadUrl()"
-      accept = 'image/png, image/jpeg, image/jpg'
+      accept = '.jpg,.jpeg,.png'
       :limit="1"
       :show-file-list = "false"
       :auto-upload = "true"
@@ -10,6 +10,10 @@
       :on-success = "onSuccessBefore"
       :on-error = "onFail"
       :before-upload = "() => {
+        ElMessage({
+          message: '开始上传，请等候...',
+          type: 'info'
+        })
         btnDisabled = true;
         return true;
       }"
@@ -53,12 +57,21 @@
     type: Function
   })
   const onSuccessBefore = async (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
+    // ElMessage({
+    //   message: `上传成功，正在更新...`,
+    //   type: 'success'
+    // })
     btnDisabled.value = false;
-    console.log(response);
-    await ApiSongEdit(id.value, {score: response.data?.path})
+    const score = response.data?.path
+    await ApiSongEdit(id.value, {score})
     .then(() => {
-      onSuccess?.value(response.data?.score)
+      ElMessage({
+        message: `更新成功！`,
+        type: 'success'
+      })
+      onSuccess?.value(score)
     }).catch(alert)
+    uploadFiles.splice(0,1)
   }
   const onFail = (error: Error) => {
     ElMessage({

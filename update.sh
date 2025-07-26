@@ -31,9 +31,7 @@ echo "npm成功"
 
 # 判断是否需要build前端
 if [[ $IS_BUILD == 1 ]]; then
-    npm install @craco/craco
     npm run build
-    npm uninstall @craco/craco
     echo "build前端成功"
 fi
 

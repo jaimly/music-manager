@@ -1,7 +1,7 @@
 <template>
   <ConfirmDialog v-model:isVisible="isShowDialog" v-model:content="dialogContent" v-model:confirm="remove" />
   <div class="main">
-    <el-input v-model="filterText" placeholder="查找歌曲或目录" />
+    <el-input v-model="filterText" placeholder="查找歌曲或目录" class="filter"/>
     <el-tree
       :data="treeData"
       :props="treeProps"
@@ -18,37 +18,51 @@
         <template #default="{ node, data }">
           <el-space :size="10">
             <el-space :size="10">
-              {{ node.label }}
-              <el-space style="display:flex; " :size="2">
-                <Upload v-if="node.level!=1 && !data.score && isLogin()"
-                  btnName="歌谱" :isBtnLink="true" :name="data.name" :id="data.id"
-                  :onSuccess="(score:string) => scoreEdit(data, score)"/>
-                <router-link :to="{ name: 'Score', state: {song: JSON.stringify({id: data.id, name: data.name, score: data.score})}}" 
-                      v-if="node.level!=1 && data.score">
-                  <el-text type="primary">歌谱</el-text>
+              <el-space :size="0">
+                <el-text v-if="titleEditId!=data.id" truncated>{{ node.label }}</el-text>
+                <el-button :icon="EditPen" type="text"
+                    v-if="titleEditId!=data.id" 
+                    @click.stop="titleEditBefore(data)" />
+                <el-input v-model="titleInput"
+                    v-if="titleEditId==data.id" 
+                    @input="titleInput" @click.stop
+                    class="title">
+                  <template #append>
+                    <el-button :icon="Check" 
+                      @click.stop="titleEdit(node,data)"/>
+                  </template>
+                </el-input>
+              </el-space>
+              <el-space style="display:flex; " :size="5">
+                <Upload v-if="node.level!=1 && !data.score && isLogin()" class="upload"
+                  btnName="谱" btnType="info" :isBtnLink="true" @click.stop
+                  :name="data.name" :id="data.id"
+                  :onSuccess="(score:string) => data.score = score"/>
+                <router-link :to="{ name: 'Score', state: {song: {id: data.id, name: data.name, score: data.score}}}" 
+                      v-if="node.level!=1 && data.score" @click.stop>
+                  <el-text type="primary">谱</el-text>
                 </router-link>
                 <router-link :to="{ name: 'Lyrics', params: { id: data.id }}" 
-                      v-if="node.level!=1 ">
-                  <el-text type="primary">歌词</el-text>
+                      v-if="node.level!=1 " @click.stop>
+                  <el-text type="primary">词</el-text>
                 </router-link>
               </el-space>
             </el-space>
 
             <el-space v-if="isLogin()">
-              <el-button size="small" type="primary" :icon="FolderAdd"
-                  @click="categoryAdd(node, data)" 
+              <el-button size="small" type="primary" :icon="FolderAdd" 
+                  @click="categoryAdd(node, data)" @click.stop
                   v-if="node.level==1"
               />
               <el-button size="small" type="success" :icon="Plus" circle
-                  @click="songAdd(node, data)" 
+                  @click="songAdd(node, data)" @click.stop
                   v-if="(node.level==1 && !node.childNodes.length) || (node.level ==2)"
               />
               <el-button size="small" type="danger" :icon="Delete" circle 
-                  @click="removeConfirm(node)"
+                  @click="removeConfirm(node)" @click.stop
                   v-if="(node.level!=1) || (node.parent?.childNodes.length > 1)" />
             </el-space>
           </el-space>
-          <!-- </div> -->
         </template>
     </el-tree>
   </div>
@@ -57,14 +71,14 @@
 <script lang="ts" setup>
   import { ref, watch, onMounted } from 'vue'
   import { ElTree, ElMessage } from 'element-plus'
-  import { Plus, Delete, FolderAdd, Refresh, CirclePlus } from '@element-plus/icons-vue'
+  import { Plus, Delete, FolderAdd, Check, EditPen } from '@element-plus/icons-vue'
   import type Node from 'element-plus/es/components/tree/src/model/node'
   import type { DragEvents } from 'element-plus/es/components/tree/src/model/useDragNode'
   import type {
     AllowDropType,
     NodeDropType,
   } from 'element-plus/es/components/tree/src/tree.type'
-  import { ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, ApiSongEdit, isLogin } from '@/tools/api'
+  import { ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, ApiCategoryEdit, ApiSongEdit, isLogin } from '@/tools/api'
   import ConfirmDialog from '@/views/comp/ConfirmDialog.vue'
   import Upload from '@/views/comp/UploadScore.vue'
 
@@ -80,7 +94,7 @@
   const treeProps = {
     children: 'songs',
     label: 'name',
-    order_num: 'order_num',
+    // order_num: 'order_num',
     class: (data: Tree, node: Node) => {
       if (node.level == 1) return 'category'
       else return 'song'
@@ -110,12 +124,18 @@
   }
   
   //自定义节点
-  const scoreEdit = async (data: Tree, score: string) => {
-    await ApiSongEdit(data.id, {score})
-    .then(() => {
-      data.score = score
-      successInfo("上传成功！")
-    }).catch(alert);
+  const titleInput = ref('')
+  const titleEditId = ref('')
+  const titleEditBefore = (data:Tree) => {
+    titleEditId.value = data.id
+    titleInput.value = data.name
+  }
+  const titleEdit = async (node:Node, data:Tree) => {
+    const api = node.level == 1 ? ApiCategoryEdit : ApiSongEdit
+    await api(node.data.id, {name:titleInput.value}).catch(alert)
+    successInfo()
+    data.name = titleInput.value
+    titleEditId.value = ""
   }
   
   const categoryAdd = async (node: Node, data: Tree) => {
@@ -158,7 +178,7 @@
   const remove = async (node: Node = dialogNode!!) => {
     const children = node.level == 1 ? treeData.value : node.parent?.data.songs
     const api = node.level == 1 ? ApiCategoryDelete : ApiSongDelete
-    await api(node.data.id).catch(alert);;
+    await api(node.data.id).catch(alert)
     const index = children.findIndex((d:Tree) => d.id === node.data.id)
     children.splice(index, 1)
     treeData.value = [...treeData.value]
@@ -199,13 +219,14 @@
     data?: any
   }
 
-  function alert(err: ApiBackInfo) {
+  async function alert(err: ApiBackInfo) {
     ElMessage({
       message: err.msg,
       type: 'warning'
     })
+    return Promise.reject(err)
   }
-  function successInfo(message: string) {
+  function successInfo(message: string="更新成功！") {
     ElMessage({
       message,
       type: 'success'
@@ -221,18 +242,32 @@
 
   .el-tree {
     --el-tree-node-content-height:50px;
+    .el-button {
+      padding-left: 5px;
+      padding-right: 5px;
+      gap: 0px;
+    }
+    .upload {
+      height: 25px;
+    }
+    .title {
+      &::v-deep .el-input__wrapper{
+        padding: 0 2px;
+      }
+      &::v-deep .el-input__inner{
+        width: 200px
+      }
+
+      &::v-deep .el-input-group__append {
+        padding: 0 15px;
+      }
+    }
   }
 
-  .el-input {
+  .filter {
     border:  2px solid var(--el-color-primary);
     border-radius: 5px;
     width: 80%;
-  }
-
-  .el-button {
-    padding-left: 5px;
-    padding-right: 5px;
-    gap: 0px;
   }
 }
 </style>

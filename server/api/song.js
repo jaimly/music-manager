@@ -60,7 +60,8 @@ cls.prototype.create = async function (ctx) {
 
         await Category.findOne({name: category}).catch(async err => {
             if(err.ok == Status.no_records_found.ok) {
-                await Category.create({name: category}, manager);
+                const category_count = await Category.count({},manager);
+                await Category.save({name: category, order_num: category_count+1}, manager);
             }
         })
 

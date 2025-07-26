@@ -18,9 +18,10 @@
   const src = ref("");
   const name = ref("");
   const srcList= ref([]<String>)
+  let song = {}
   
   onMounted(() => {
-    const song = JSON.parse(history.state.song)
+    song = history.state.song
     id.value = song.id
     name.value = song.name
     src.value = toSrc(song.score)
@@ -28,11 +29,14 @@
   })
 
   const onSuccess = (path: string) => {
-    src.value = path
+    src.value = toSrc(path)
+    srcList.value = [src.value]
+    song.score = path
+    history.replaceState({song}, "")
   }
 
   const toSrc = (path: string) => {
-    return `${path}?t=${Date.now}${Math.floor(Math.random() * 10)}`
+    return `${path}?t=${Date.now()}`
   }
 </script>
   
@@ -44,6 +48,6 @@
   height: 0px;
   &::v-deep .global-float-button {
     top: 50px;
-}
+  }
 }
 </style>

@@ -49,6 +49,11 @@ async function ApiCategoryCreate(name,order_num) {
     return back;
 }
 
+async function ApiCategoryEdit(id, condition) {
+    const back = await post("/category/edit",Object.assign({id}, condition));
+    return back;
+}
+
 async function ApiSongEdit(id, condition) {
     const back = await post("/song/edit",Object.assign({id}, condition));
     return back;
@@ -178,6 +183,7 @@ export {
     ApiCategoryDelete,
     ApiSongCreate,
     ApiCategoryCreate,
+    ApiCategoryEdit,
     ApiSongEdit,
     ApiFileUploadUrl,
     globalError
