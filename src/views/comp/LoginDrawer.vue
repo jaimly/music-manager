@@ -29,9 +29,17 @@ import { isLogin, ApiLogin, ApiLogout } from '@/tools/api'
   const password = ref('')
   const btnName = ref(isLogin() ? '退出' : '管理')
 
+  const status = defineModel("status", {
+    type: Function,
+  })
+
   function showBtnClick() {
     if(!isLogin()) isVisible.value = true
-    else ApiLogout()
+    else {
+      ApiLogout()
+      btnName.value = '管理'
+      status.value && status.value(false);
+    }
   }
 
   async function confirmClick() {
@@ -40,25 +48,19 @@ import { isLogin, ApiLogin, ApiLogout } from '@/tools/api'
         isVisible.value = false
         isInfo.value = false
         btnName.value = '退出'
+        status.value && status.value(true)
         ElMessage({
           message: "登录成功",
           type: 'success'
         })
       })
-      .catch((err:ApiBackInfo) => isInfo.value = true)
+      .catch(() => isInfo.value = true)
   }
 
   interface ApiBackInfo {
     ok: number,
     msg: string,
     data?: any
-  }
-
-  function alert(err: ApiBackInfo) {
-    ElMessage({
-      message: err.msg,
-      type: 'warning'
-    })
   }
 </script>
 

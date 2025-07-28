@@ -68,14 +68,14 @@ function ApiFileUploadUrl() {
 async function ApiLogin(password) {
     const back = await post("/password/login",{password});
     window.localStorage.setItem('password', back.password);
-    window.location.reload();
+    // window.location.reload();
     return back;
 }
 
 function ApiLogout(href='') {
     window.localStorage.removeItem('password');
-    window.location.reload();
-    if(href) window.location.href=href;
+    // window.location.reload();
+    // if(href) window.location.href=href;
 }
 
 function isLogin() {

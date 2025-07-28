@@ -1,5 +1,6 @@
 <template>
-  <ConfirmDialog v-model:isVisible="isShowDialog" v-model:content="dialogContent" v-model:confirm="remove" />
+  <LoginDrawer :status="isLoginStatus"/>
+  <ConfirmDialog :isVisible="isShowDialog" :content="dialogContent" :confirm="remove"/>
   <div class="main">
     <el-input v-model="filterText" placeholder="查找歌曲或目录" class="filter"/>
     <el-tree
@@ -10,14 +11,15 @@
       :filter-node-method="filterNode"
       :expand-on-click-node="true"
       :default-expanded-keys="[treeData[0]?.id]"
-      draggable
       :accordion="!isLogin()"
+      empty-text="加载中，请稍候..."
+      draggable
       ref="treeRef"
       node-key="id"
       icon = "a"
       @node-drop="handleDrop">
         <template #default="{ node, data }">
-          <el-space>
+          <div class="row">
             <el-space>
               <!-- 显示与隐藏 -->
               <el-button type="warning" link
@@ -44,17 +46,18 @@
 
             <!-- 歌谱，歌词 -->
             <el-space>
+            <el-space>
               <Upload v-if="node.level!=1 && !data.score && isLogin()" class="upload"
-                btnName="谱" btnType="info" :isBtnLink="true" @click.stop
+                :btnName="isLogin()?'谱':'歌谱'" btnType="info" :isBtnLink="true" @click.stop
                 :name="data.name" :id="data.id"
                 :onSuccess="(score:string) => data.score = score"/>
               <router-link :to="{ name: 'Score', state: {song: {id: data.id, name: data.name, score: data.score}}}" 
                     v-if="node.level!=1 && data.score" @click.stop>
-                <el-text type="primary">谱</el-text>
+                <el-text type="primary">{{ isLogin()?'':'歌' }}谱</el-text>
               </router-link>
               <router-link :to="{ name: 'Lyrics', params: { id: data.id }}" 
                     v-if="node.level!=1 " @click.stop>
-                <el-text type="primary">词</el-text>
+                <el-text type="primary">{{ isLogin()?'':'歌' }}词</el-text>
               </router-link>
             </el-space>
 
@@ -72,7 +75,8 @@
                   @click="removeConfirm(node)" @click.stop
                   v-if="(node.level!=1) || (node.parent?.childNodes.length > 1)" />
             </el-space>
-          </el-space>
+            </el-space>
+          </div>
         </template>
     </el-tree>
   </div>
@@ -85,7 +89,8 @@
   import type { AllowDropType, NodeDropType, TreeNodeData} from 'element-plus/es/components/tree/src/tree.type'
   import type { FilterNodeMethodFunction, TreeInstance } from 'element-plus'
   import type Node from 'element-plus/es/components/tree/src/model/node'
-  import { ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, ApiCategoryEdit, ApiSongEdit, isLogin } from '@/tools/api'
+  import { isLogin as ApiIsLogin, ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, ApiCategoryEdit, ApiSongEdit } from '@/tools/api'
+  import LoginDrawer from '@/views/comp/LoginDrawer.vue'
   import ConfirmDialog from '@/views/comp/ConfirmDialog.vue'
   import Upload from '@/views/comp/UploadScore.vue'
 
@@ -107,9 +112,17 @@
     }
   }
 
+  //登录相关
+  const loginStatus = ref();
+  const isLoginStatus = (val: boolean) => {
+    loginStatus.value = val
+  }
+  const isLogin = () => loginStatus.value
+
   //初始化树数据
   const treeData = ref<Tree[]>([])
   onMounted(async() => {
+    loginStatus.value = ApiIsLogin()
     await ApiCategorySongList().then((list: []) => {
       treeData.value = list as Tree[]
     }).catch(alert)
@@ -253,13 +266,18 @@
 
   .el-tree {
     --el-tree-node-content-height:50px;
+      border: 1px solid var(--el-border-color-darker);
     .el-button {
       padding-left: 5px;
       padding-right: 5px;
       gap: 0px;
     }
     .upload {
-      height: 25px;
+      // height: 10px;
+      &::v-deep .el-button {
+        padding: 0px;
+        border: none;
+      }
     }
     .title {
       &::v-deep .el-input__wrapper{
@@ -277,6 +295,12 @@
       width: 0px;
       padding: 0px;
     }
+
+    &::v-deep .row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
   }
 
   .filter {
@@ -288,20 +312,18 @@
 </style>
 <style lang="less">
 .el-tree {
-  border-left: 1px solid var(--el-border-color-darker);
-  border-right: 1px solid var(--el-border-color-darker);
   .category > .el-tree-node__content {
       background-color: var(--el-color-primary-light-9);
       color: var(--el-text-color-primary);
       gap: 10px;
       height: 60px;
-      padding-left: 10px !important;
+      padding: 0 10px !important;
       border-top: 1px solid var(--el-border-color-darker);
       border-bottom: 1px solid var(--el-border-color-darker);
-    }
+  }
   .song {
     .el-tree-node__content {
-      margin-left: 20px;
+      margin-left: 10px;
       margin-right: 10px;
       padding: 0 !important;
       border-top: 1px solid var(--el-border-color);
