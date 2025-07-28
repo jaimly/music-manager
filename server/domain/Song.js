@@ -49,9 +49,10 @@ class Song extends Base {
         return record;
     }
 
-    async updateOrder (order_num, is_add, manager) {
+    async updateOrder (category, order_num, is_add, manager) {
         if(!order_num) return Promise.resolve();
         return super.update({
+            category,
             order_num: MoreThanOrEqual(order_num)
         }, {
             order_num: () => `order_num${is_add?'+1':'-1'}`,

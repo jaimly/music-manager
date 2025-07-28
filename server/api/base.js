@@ -17,7 +17,7 @@ class cls extends Base{
                 }
             });
         }
-        return ctx.jwt || {};
+        return {password};
     }
 }
 

@@ -17,6 +17,8 @@ const {verifyFormat, isPermission} = instance;
 
 cls.prototype.list = async function (ctx) {
     const {body} = ctx.request;
+    const {password} = await isPermission(ctx);
+    if(!password) body.is_show = 1;
 
     const sort = body.sort || {order_num: 1};
     const rows = await Category.list(body,null,sort);

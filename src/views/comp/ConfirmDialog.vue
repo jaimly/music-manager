@@ -2,7 +2,6 @@
     <el-dialog
         v-model="isVisible"
         title="提醒"
-        width="30%"
         align-center
         center
     >

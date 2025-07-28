@@ -3,7 +3,7 @@ import Axios from 'axios';
 const IsAlert = false;
 
 async function ApiCategorySongList() {
-    const category_back = await ApiCategoryList({per_page: -1, fields:'id,name,order_num'});
+    const category_back = await ApiCategoryList({per_page: -1, fields:'id,name,order_num,is_show'});
     if(category_back.total_count === 0) return [];
 
     const categorys = category_back.rows;
@@ -11,12 +11,9 @@ async function ApiCategorySongList() {
     const songs = song_back.rows;
 
     return categorys.map(category => {
-        return {
-            id: category.id,
-            name: category.name,
-            order_num: category.order_num,
+        return Object.assign({
             songs: songs.filter(song => song.category === category.name)
-        }
+        }, category);
     })
 }
 
@@ -56,6 +53,11 @@ async function ApiCategoryEdit(id, condition) {
 
 async function ApiSongEdit(id, condition) {
     const back = await post("/song/edit",Object.assign({id}, condition));
+    return back;
+}
+
+async function ApiSongDetail(id, fields) {
+    const back = await get("/song/detail",{id,fields});
     return back;
 }
 
@@ -185,6 +187,7 @@ export {
     ApiCategoryCreate,
     ApiCategoryEdit,
     ApiSongEdit,
+    ApiSongDetail,
     ApiFileUploadUrl,
     globalError
 }

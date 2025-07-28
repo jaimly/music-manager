@@ -18,6 +18,8 @@ const {verifyFormat, isPermission} = instance;
 
 cls.prototype.list = async function (ctx) {
     const {body} = ctx.request;
+    const {password} = await isPermission(ctx);
+    if(!password) body.is_show = 1;
 
     const sort = body.sort || {order_num: 1}
     const rows = await Song.list(body,null,sort);
@@ -45,6 +47,28 @@ cls.prototype.list.settings = {
     }
 };
 
+cls.prototype.detail = async function (ctx) {
+    const query = ctx.request;
+    const {password} = await isPermission(ctx);
+    if(!password) query.is_show = 1;
+
+    const record = await Song.findOne(query);
+    return Song.toFront(record);
+}
+cls.prototype.detail.settings = {
+    params: {
+        is_filter: true,
+        body: {
+            "type": "object",
+            "properties": Object.assign({
+                "id": verifyFormat.minString,
+                "fields": {"type": "string"}
+            }),
+            "required":[]
+        }
+    }
+};
+
 cls.prototype.create = async function (ctx) {
     await isPermission(ctx);
 
@@ -54,7 +78,7 @@ cls.prototype.create = async function (ctx) {
 
 
     return Song.connector.transaction(async manager => {
-        await Song.updateOrder(order_num, true, manager);
+        await Song.updateOrder(category, order_num, true, manager);
 
         const back = await Song.save(body,manager);
 
@@ -92,13 +116,22 @@ cls.prototype.create.settings = {
 cls.prototype.edit = async function (ctx) {
     await isPermission(ctx);
 
-    const {body} = ctx.request;
+    let {body} = ctx.request;
     if(body.score) body.score = File.toDbPath(body.score);
-    const {id,score,order_num} = body;
+    const {id,score,order_num,category} = body;
     const record = await Song.findOne({id});
 
     return Song.connector.transaction(async manager => {
-        if(order_num && order_num != record.order_num) await Song.updateOrder(order_num, true, manager);
+        if(category && category != record.category) {
+            await Song.updateOrder(record.category, order_num, false, manager);
+            if(!order_num) {
+                body.order_num = (await Song.count({category}, manager)) + 1;
+            } else {
+                await Song.updateOrder(category, order_num, true, manager);
+            }
+        } else if(order_num && order_num != record.order_num) {
+            await Song.updateOrder(record.category, order_num, true, manager);
+        }
         
         await Song.update({id},Object.assign({
             updated_at: Date.now()

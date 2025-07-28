@@ -11,16 +11,23 @@
       :expand-on-click-node="true"
       :default-expanded-keys="[treeData[0]?.id]"
       draggable
-      accordion
+      :accordion="!isLogin()"
       ref="treeRef"
       node-key="id"
+      icon = "a"
       @node-drop="handleDrop">
         <template #default="{ node, data }">
-          <el-space :size="10">
-            <el-space :size="10">
+          <el-space>
+            <el-space>
+              <!-- 显示与隐藏 -->
+              <el-button type="warning" link
+                v-if="isLogin() && !data.category" 
+                :icon="data.is_show==1?View:Hide"
+                @click.stop="categoryShow(data)"/>
+              <!-- 名字及操作 -->
               <el-space :size="0">
                 <el-text v-if="titleEditId!=data.id" truncated>{{ node.label }}</el-text>
-                <el-button :icon="EditPen" type="text"
+                <el-button :icon="EditPen" type="primary" link
                     v-if="isLogin() && titleEditId!=data.id" 
                     @click.stop="titleEditBefore(data)" />
                 <el-input v-model="titleInput"
@@ -33,22 +40,25 @@
                   </template>
                 </el-input>
               </el-space>
-              <el-space style="display:flex; " :size="5">
-                <Upload v-if="node.level!=1 && !data.score && isLogin()" class="upload"
-                  btnName="谱" btnType="info" :isBtnLink="true" @click.stop
-                  :name="data.name" :id="data.id"
-                  :onSuccess="(score:string) => data.score = score"/>
-                <router-link :to="{ name: 'Score', state: {song: {id: data.id, name: data.name, score: data.score}}}" 
-                      v-if="node.level!=1 && data.score" @click.stop>
-                  <el-text type="primary">谱</el-text>
-                </router-link>
-                <router-link :to="{ name: 'Lyrics', params: { id: data.id }}" 
-                      v-if="node.level!=1 " @click.stop>
-                  <el-text type="primary">词</el-text>
-                </router-link>
-              </el-space>
             </el-space>
 
+            <!-- 歌谱，歌词 -->
+            <el-space>
+              <Upload v-if="node.level!=1 && !data.score && isLogin()" class="upload"
+                btnName="谱" btnType="info" :isBtnLink="true" @click.stop
+                :name="data.name" :id="data.id"
+                :onSuccess="(score:string) => data.score = score"/>
+              <router-link :to="{ name: 'Score', state: {song: {id: data.id, name: data.name, score: data.score}}}" 
+                    v-if="node.level!=1 && data.score" @click.stop>
+                <el-text type="primary">谱</el-text>
+              </router-link>
+              <router-link :to="{ name: 'Lyrics', params: { id: data.id }}" 
+                    v-if="node.level!=1 " @click.stop>
+                <el-text type="primary">词</el-text>
+              </router-link>
+            </el-space>
+
+            <!-- 行操作按钮 -->
             <el-space v-if="isLogin()">
               <el-button size="small" type="primary" :icon="FolderAdd" 
                   @click="categoryAdd(node, data)" @click.stop
@@ -71,59 +81,52 @@
 <script lang="ts" setup>
   import { ref, watch, onMounted } from 'vue'
   import { ElTree, ElMessage } from 'element-plus'
-  import { Plus, Delete, FolderAdd, Check, EditPen } from '@element-plus/icons-vue'
+  import { Plus, Delete, FolderAdd, Check, EditPen, View, Hide } from '@element-plus/icons-vue'
+  import type { AllowDropType, NodeDropType, TreeNodeData} from 'element-plus/es/components/tree/src/tree.type'
+  import type { FilterNodeMethodFunction, TreeInstance } from 'element-plus'
   import type Node from 'element-plus/es/components/tree/src/model/node'
-  import type { DragEvents } from 'element-plus/es/components/tree/src/model/useDragNode'
-  import type {
-    AllowDropType,
-    NodeDropType,
-  } from 'element-plus/es/components/tree/src/tree.type'
   import { ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, ApiCategoryEdit, ApiSongEdit, isLogin } from '@/tools/api'
   import ConfirmDialog from '@/views/comp/ConfirmDialog.vue'
   import Upload from '@/views/comp/UploadScore.vue'
 
+  //初始化树结构
   interface Tree {
     id: string,
     name: string,
     order_num: number,
     category?: string,
+    is_show?: number,
     score?: string,
     songs?: Tree[]
   }
-
   const treeProps = {
     children: 'songs',
     label: 'name',
-    // order_num: 'order_num',
-    class: (data: Tree, node: Node) => {
-      if (node.level == 1) return 'category'
-      else return 'song'
+    class:  ({ category }: TreeNodeData) => {
+      return category ? 'song' : 'category'
     }
   }
 
-  //初始化数据
+  //初始化树数据
   const treeData = ref<Tree[]>([])
   onMounted(async() => {
     await ApiCategorySongList().then((list: []) => {
       treeData.value = list as Tree[]
     }).catch(alert)
   });
-  
 
   //搜索
   const filterText = ref('')
-  const treeRef = ref<InstanceType<typeof ElTree>>()
-
+  const treeRef = ref<TreeInstance>()
   watch(filterText, (val) => {
     treeRef.value!.filter(val)
   })
-
-  const filterNode = (value: string, data: Tree) => {
+  const filterNode: FilterNodeMethodFunction = (value: string, data: Tree) => {
     if (!value) return true
     return data.name.includes(value)
   }
   
-  //自定义节点
+  //操作按钮
   const titleInput = ref('')
   const titleEditId = ref('')
   const titleEditBefore = (data:Tree) => {
@@ -136,6 +139,12 @@
     successInfo()
     data.name = titleInput.value
     titleEditId.value = ""
+  }
+  const categoryShow = async (data: Tree) => {
+    const is_show = data.is_show == 1 ? 0 :1;
+    await ApiCategoryEdit(data.id, {is_show}).catch(alert);
+    successInfo(`更新成功，此分类${data.is_show?'将在前台显示':'不再显示'}`)
+    data.is_show = is_show;
   }
   
   const categoryAdd = async (node: Node, data: Tree) => {
@@ -187,16 +196,18 @@
   }
 
   //拖拽:结束并成功
-  const handleDrop = (
+  const handleDrop = async (
     draggingNode: Node,
     dropNode: Node,
-    dropType: NodeDropType,
-    ev: DragEvents
+    dropType: NodeDropType
   ) => {
-    // console.log('draggingNode:', draggingNode)
-    // console.log('dropNode:', dropNode)
-    // console.log('type:', type)
-    // TODO api : update Song or Category Level
+    const condition = {
+      category: dropNode.data.category || dropNode.data.name, 
+      order_num: dropType != 'inner' && (
+        dropType=='before' ? dropNode.data.order_num : dropNode.data.order_num+1
+      ) || undefined
+    }
+    await ApiSongEdit(draggingNode.data.id, condition);
   }
 
   //拖拽: 是否拖拽样式
@@ -255,12 +266,16 @@
         padding: 0 2px;
       }
       &::v-deep .el-input__inner{
-        width: 200px
+        width: 180px
       }
 
       &::v-deep .el-input-group__append {
         padding: 0 15px;
       }
+    }
+    &::v-deep .el-tree-node__expand-icon {
+      width: 0px;
+      padding: 0px;
     }
   }
 
@@ -276,7 +291,7 @@
   border-left: 1px solid var(--el-border-color-darker);
   border-right: 1px solid var(--el-border-color-darker);
   .category > .el-tree-node__content {
-      background-color: var(--el-color-primary-light-9); //rgba(248, 248, 248);
+      background-color: var(--el-color-primary-light-9);
       color: var(--el-text-color-primary);
       gap: 10px;
       height: 60px;
@@ -290,10 +305,6 @@
       margin-right: 10px;
       padding: 0 !important;
       border-top: 1px solid var(--el-border-color);
-      .el-tree-node__expand-icon {
-        width: 0px;
-        padding: 0px;
-      }
     }
   }
 }

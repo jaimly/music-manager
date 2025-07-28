@@ -1,12 +1,14 @@
 <template>
-<Upload v-if="isLogin()" class="upload"
-    btnName="更换" btnClass="global-float-button"
-    :id="id" :name="name" 
-    :onSuccess="onSuccess"/>
-  <el-image :src="src" :z-index="999" :preview-src-list="srcList"/>
-  <router-link :to="{ name: 'Index' }" >
-    <el-button class="global-float-button" type="warning">返回</el-button>
-  </router-link>
+  <div>
+    <Upload v-if="isLogin()" class="upload"
+      btnName="更换" btnClass="global-float-button"
+      :id="id" :name="name" 
+      :onSuccess="onSuccess"/>
+    <el-image :src="src" :z-index="999" :preview-src-list="srcList"/>
+    <router-link :to="{ name: 'Index' }" >
+      <el-button class="global-float-button" type="warning">返回</el-button>
+    </router-link>
+  </div>
 </template>
   
 <script lang="ts" setup>
