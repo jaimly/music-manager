@@ -48,7 +48,7 @@ cls.prototype.list.settings = {
 };
 
 cls.prototype.detail = async function (ctx) {
-    const query = ctx.request;
+    const {query} = ctx.request;
     const {password} = await isPermission(ctx);
     if(!password) query.is_show = 1;
 
