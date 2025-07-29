@@ -1,6 +1,7 @@
 <template>
     <div class="main">
-        <el-input type="textarea" v-model="lyrics" resize="none" autosize clearable
+        <el-input type="textarea" v-model="lyrics" resize="none" 
+            :autosize="isLogin()"
             :readonly="!isLogin()"
             :class="!isLogin() ? 'view' : ''" />
         <el-button v-if="isLogin()" type="primary" @click="save">保存</el-button>
@@ -52,7 +53,7 @@
   }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .main {
     width: 100%;
     display: flex;
@@ -64,6 +65,7 @@
         &:deep(.el-textarea__inner) {
             background-color: rgba(0, 0, 0, 0);
             box-shadow: none;
+            height: calc(~"100vh - 10px") !important;
         }
     }
 }
