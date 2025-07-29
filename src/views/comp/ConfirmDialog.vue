@@ -17,7 +17,6 @@
     </el-dialog>
 </template>
 <script lang="ts" setup>
-  import { defineModel } from 'vue'
   const isVisible = defineModel("isVisible", {
     type: Boolean,
     default: false

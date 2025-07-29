@@ -12,7 +12,7 @@
       :expand-on-click-node="true"
       :default-expanded-keys="[treeData[0]?.id]"
       :accordion="!isLogin()"
-      empty-text="加载中，请稍候..."
+      empty-text="无数据"
       draggable
       ref="treeRef"
       node-key="id"
@@ -284,29 +284,29 @@
     }
     .upload {
       // height: 10px;
-      &::v-deep .el-button {
+      &:deep(.el-button) {
         padding: 0px;
         border: none;
       }
     }
     .title {
-      &::v-deep .el-input__wrapper{
+      &:deep(.el-input__wrapper) {
         padding: 0 2px;
       }
-      &::v-deep .el-input__inner{
+      &:deep(.el-input__inner) {
         width: 180px
       }
 
-      &::v-deep .el-input-group__append {
+      &:deep(.el-input-group__append) {
         padding: 0 15px;
       }
     }
-    &::v-deep .el-tree-node__expand-icon {
+    &:deep(.el-tree-node__expand-icon) {
       width: 0px;
       padding: 0px;
     }
 
-    &::v-deep .row {
+    &:deep(.row) {
       width: 100%;
       display: flex;
       justify-content: space-between;

@@ -52,7 +52,7 @@
 }
 .upload {
   height: 0px;
-  &::v-deep .global-float-button {
+  &:deep .global-float-button {
     top: 50px;
   }
 }

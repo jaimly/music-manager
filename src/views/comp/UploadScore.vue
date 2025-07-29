@@ -22,7 +22,7 @@
     </el-upload>
 </template>
 <script lang="ts" setup>
-  import { ref, defineModel } from 'vue'
+  import { ref } from 'vue'
   import { ElMessage } from 'element-plus'
   import type {UploadFile, UploadFiles} from 'element-plus'
   import { ApiFileUploadUrl, ApiFileUpdateUrl, ApiSongEdit, ApiFileDelete } from '@/tools/api'
