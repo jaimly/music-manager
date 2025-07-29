@@ -2,7 +2,7 @@
   <div>
     <Upload v-if="isLogin()" class="upload"
       btnName="更换" btnClass="global-float-button"
-      :id="id" :name="name" 
+      :id="id" :name="name" :path="src"
       :onSuccess="onSuccess"/>
     <el-image :src="src" :z-index="999" :preview-src-list="srcList"/>
     <router-link :to="{ name: 'Index' }" >
@@ -16,11 +16,17 @@
   import { isLogin } from '@/tools/api'
   import Upload from '@/views/comp/UploadScore.vue'
 
+  interface Song {
+    id: string,
+    name: string,
+    score: string
+  }
+
   const id = ref("");
   const src = ref("");
   const name = ref("");
-  const srcList= ref([]<String>)
-  let song = {}
+  const srcList= ref<string[]>([])
+  let song:Song
   
   onMounted(() => {
     song = history.state.song
@@ -33,8 +39,6 @@
   const onSuccess = (path: string) => {
     src.value = toSrc(path)
     srcList.value = [src.value]
-    song.score = path
-    history.replaceState({song}, "")
   }
 
   const toSrc = (path: string) => {

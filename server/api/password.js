@@ -27,23 +27,22 @@ cls.prototype.login.settings = {
             "required":["password"]
         }
     }
-};
+}
 
-cls.prototype.update = async function (ctx) {
-    await isPermission(ctx);
-    
-    const {password} = ctx.request.query;
-    return await Password.update({password});
+cls.prototype.edit = async function (ctx) {
+    const {password, new_password} = ctx.request.query;
+    return await Password.update({password}, {password: new_password});
 };
-cls.prototype.update.settings = {
+cls.prototype.edit.settings = {
     params: {
         is_filter: true,
         query: {
             "type": "object",
             "properties": {
-                "password": verifyFormat.minString
+                "password": verifyFormat.minString,
+                "new_password": verifyFormat.minString
             },
-            "required":["password"]
+            "required":["password","new_password"]
         }
     }
 }

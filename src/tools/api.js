@@ -7,7 +7,7 @@ async function ApiCategorySongList() {
     if(category_back.total_count === 0) return [];
 
     const categorys = category_back.rows;
-    const song_back = await ApiSongList({per_page: -1, fields:'id,name,category,order_num,score'});
+    const song_back = await ApiSongList({per_page: -1, fields:'id,name,category,order_num,score,is_lyrics'});
     const songs = song_back.rows;
 
     return categorys.map(category => {
@@ -26,43 +26,44 @@ async function ApiCategoryList(condition) {
 
 async function ApiSongDelete(id) {
     if(id.constructor === String) id=[id];
-    const back = await get("/song/delete",{id: id.join(',')});
-    return back;
+    return get("/song/delete",{id: id.join(',')});
 }
 
 async function ApiCategoryDelete(id) {
     if(id.constructor === String) id=[id];
-    const back = await get("/category/delete",{id: id.join(',')});
-    return back;
+    return get("/category/delete",{id: id.join(',')});
 }
 
 async function ApiSongCreate(name,category,order_num) {
-    const back = await post("/song/create",{name,category,order_num});
-    return back;
+    return post("/song/create",{name,category,order_num});
 }
 
 async function ApiCategoryCreate(name,order_num) {
-    const back = await post("/category/create",{name,order_num});
-    return back;
+    return post("/category/create",{name,order_num});
 }
 
 async function ApiCategoryEdit(id, condition) {
-    const back = await post("/category/edit",Object.assign({id}, condition));
-    return back;
+    return post("/category/edit",Object.assign({id}, condition));
 }
 
 async function ApiSongEdit(id, condition) {
-    const back = await post("/song/edit",Object.assign({id}, condition));
-    return back;
+    return post("/song/edit",Object.assign({id}, condition));
 }
 
 async function ApiSongDetail(id, fields) {
-    const back = await get("/song/detail",{id,fields});
-    return back;
+    return get("/song/detail",{id,fields});
+}
+
+async function ApiFileDelete(id) {
+    return get("/file/delete", {id});
 }
 
 function ApiFileUploadUrl() {
     return getApiFullUrl('/file/upload');
+}
+
+function ApiFileUpdateUrl() {
+    return getApiFullUrl('/file/update');
 }
 
 async function ApiLogin(password) {
@@ -80,6 +81,10 @@ function ApiLogout(href='') {
 
 function isLogin() {
     return Boolean(window.localStorage.getItem('password'));
+}
+
+function ApiEditPassword(password, new_password) {
+    return get("/password/edit", {password, new_password});
 }
 
 async function post(url,data,params,not_form) {
@@ -178,6 +183,7 @@ export {
     isLogin,
     ApiLogin,
     ApiLogout,
+    ApiEditPassword,
     ApiCategorySongList,
     ApiSongList,
     ApiCategoryList,
@@ -188,6 +194,8 @@ export {
     ApiCategoryEdit,
     ApiSongEdit,
     ApiSongDetail,
+    ApiFileDelete,
     ApiFileUploadUrl,
+    ApiFileUpdateUrl,
     globalError
 }

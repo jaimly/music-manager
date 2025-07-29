@@ -49,15 +49,15 @@
             <el-space>
               <Upload v-if="node.level!=1 && !data.score && isLogin()" class="upload"
                 :btnName="isLogin()?'谱':'歌谱'" btnType="info" :isBtnLink="true" @click.stop
-                :name="data.name" :id="data.id"
+                :name="data.name" :id="data.id" :path="data.score"
                 :onSuccess="(score:string) => data.score = score"/>
               <router-link :to="{ name: 'Score', state: {song: {id: data.id, name: data.name, score: data.score}}}" 
                     v-if="node.level!=1 && data.score" @click.stop>
                 <el-text type="primary">{{ isLogin()?'':'歌' }}谱</el-text>
               </router-link>
               <router-link :to="{ name: 'Lyrics', params: { id: data.id }}" 
-                    v-if="node.level!=1 " @click.stop>
-                <el-text type="primary">{{ isLogin()?'':'歌' }}词</el-text>
+                    v-if="node.level!=1 && (isLogin() || data.is_lyrics)" @click.stop>
+                <el-text :type="data.is_lyrics ? 'primary' : 'info'">{{ isLogin()?'':'歌' }}词</el-text>
               </router-link>
             </el-space>
 
@@ -101,6 +101,7 @@
     order_num: number,
     category?: string,
     is_show?: number,
+    is_lyrics?: number,
     score?: string,
     songs?: Tree[]
   }
@@ -114,19 +115,26 @@
 
   //登录相关
   const loginStatus = ref();
-  const isLoginStatus = (val: boolean) => {
-    loginStatus.value = val
-  }
   const isLogin = () => loginStatus.value
 
   //初始化树数据
   const treeData = ref<Tree[]>([])
   onMounted(async() => {
     loginStatus.value = ApiIsLogin()
+    setTreeData()
+  });
+  const isLoginStatus = (val: boolean) => {
+    loginStatus.value = val
+    if(val) setTreeData()
+    else if(treeData.value) { 
+      treeData.value = treeData.value.filter(x=>x.is_show==1)
+    }
+  }
+  const setTreeData = async () => {
     await ApiCategorySongList().then((list: []) => {
       treeData.value = list as Tree[]
     }).catch(alert)
-  });
+  }
 
   //搜索
   const filterText = ref('')
@@ -148,9 +156,11 @@
   }
   const titleEdit = async (node:Node, data:Tree) => {
     const api = node.level == 1 ? ApiCategoryEdit : ApiSongEdit
-    await api(node.data.id, {name:titleInput.value}).catch(alert)
+    const {score} = await api(node.data.id, {name:titleInput.value}).catch(alert)
     successInfo()
     data.name = titleInput.value
+    data.score = score
+    console.log(data.score)
     titleEditId.value = ""
   }
   const categoryShow = async (data: Tree) => {

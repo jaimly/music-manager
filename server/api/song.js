@@ -22,7 +22,15 @@ cls.prototype.list = async function (ctx) {
     if(!password) body.is_show = 1;
 
     const sort = body.sort || {order_num: 1}
-    const rows = await Song.list(body,null,sort);
+    delete body.sort;
+
+    let fields = body.fields?.split(',');
+    const index = fields?.indexOf('is_lyrics');
+    if(index > -1) {
+        fields.splice(index,1,'IF(LENGTH(lyrics)>0,1,0) is_lyrics')
+    }
+
+    const rows = await Song.list(body,fields,sort);
     return {
         total_count: rows.length, 
         rows: rows.map(row => Song.toFront(row))
@@ -118,7 +126,7 @@ cls.prototype.edit = async function (ctx) {
 
     let {body} = ctx.request;
     if(body.score) body.score = File.toDbPath(body.score);
-    const {id,score,order_num,category} = body;
+    const {id,name,score,order_num,category} = body;
     const record = await Song.findOne({id});
 
     return Song.connector.transaction(async manager => {
@@ -132,15 +140,24 @@ cls.prototype.edit = async function (ctx) {
         } else if(order_num && order_num != record.order_num) {
             await Song.updateOrder(record.category, order_num, true, manager);
         }
+
+        if(name && name != record.name) {
+            const {path} = await File.updatePath(record.score, {
+                category: "score",
+                name: name || record.name,
+                id
+            }, manager);
+            body.score = path;
+        }
+
+        if(score && score != record.score) {
+            if(record.score) await File.deleteByPath(record.score);
+            await File.updateByPath(score,{is_used: 1}, manager);
+        }
         
         await Song.update({id},Object.assign({
             updated_at: Date.now()
         },body),manager);
-
-        if(!record.score && score) {
-            if(record.score) await File.deleteByPath(record.score);
-            await File.updateByPath(score,{is_used: 1}, manager);
-        }
 
         return Song.toFront(body);
     });

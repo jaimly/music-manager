@@ -119,10 +119,10 @@ cls.prototype.update = async function (ctx) {
     const ext = Path.extname(file_name);
     const target_db_path = origin_db_path.slice(0,origin_db_path.lastIndexOf('.')) + ext;
     const target_file_path = File.toFilePath(target_db_path);
-    const back = await File.updateByPath(origin_db_path, {type,size,ext,path: target_db_path});
+    const {path: new_path} = await File.updateByPath(origin_db_path, {type,size,ext,path: target_db_path});
     if(Fs.existsSync(origin_file_path)) Fs.unlinkSync(origin_file_path);
     Fs.copyFileSync(temp_path, target_file_path);
-    return back;
+    return File.toFront({path: new_path});
 };
 cls.prototype.update.settins = {
     params: {
@@ -138,7 +138,7 @@ cls.prototype.update.settins = {
                     }
                 }
             },
-            "required":["files"]
+            "required":["path","files"]
         }
     }
 };
