@@ -113,8 +113,9 @@ cls.prototype.create.settings = {
                 "name": verifyFormat.minString,
                 "is_show": {"enum": [0,1]},
                 "category": {"type": "string"},
-                "order_num": {"type": "integer"},
+                "order_num": verifyFormat.positiveInt,
                 "score": {"type": "string"},
+                "score_num": verifyFormat.positiveInt,
                 "lyrics": {"type": "string"}
             },"required":["name","category","order_num"]
         }
@@ -126,22 +127,13 @@ cls.prototype.edit = async function (ctx) {
 
     let {body} = ctx.request;
     if(body.score) body.score = File.toDbPath(body.score);
-    const {id,name,score,order_num,category} = body;
+    const {id,name,score} = body;
+    delete body.order_num;
+
     const record = await Song.findOne({id});
 
     return Song.connector.transaction(async manager => {
-        if(category && category != record.category) {
-            await Song.updateOrder(record.category, order_num, false, manager);
-            if(!order_num) {
-                body.order_num = (await Song.count({category}, manager)) + 1;
-            } else {
-                await Song.updateOrder(category, order_num, true, manager);
-            }
-        } else if(order_num && order_num != record.order_num) {
-            await Song.updateOrder(record.category, order_num, true, manager);
-        }
-
-        if(name && name != record.name) {
+        if(record.score && name && name != record.name) {
             const {path} = await File.updatePath(record.score, {
                 category: "score",
                 name: name || record.name,
@@ -171,6 +163,37 @@ cls.prototype.edit.settings = {
                 "id": verifyFormat.minString
             }, cls.prototype.create.settings.params.body.properties),
             "required":["id"]
+        }
+    }
+};
+
+cls.prototype.editOrdernums = async function (ctx) {
+    await isPermission(ctx);
+    
+    const {ids,order_nums} = ctx.request.body;
+    return  Song.connector.transaction(async manager => {
+        let count = 0;
+        for (var i = 0; i < ids.length; i++) {
+            count += await Song.update({id: ids[i]},{order_num: order_nums[i]}, manager);
+        }
+        return count;
+    });
+}
+cls.prototype.editOrdernums.settings = {
+    params: {
+        is_filter: true,
+        body: {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": verifyFormat.minString
+                },
+                "order_nums": {
+                    "type": "array",
+                    "items": verifyFormat.positiveInt
+                }
+            },"required":["ids","order_nums"]
         }
     }
 };

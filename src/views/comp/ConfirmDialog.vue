@@ -18,8 +18,7 @@
 </template>
 <script lang="ts" setup>
   const isVisible = defineModel("isVisible", {
-    type: Boolean,
-    default: false
+    type: Boolean
   })
   const content = defineModel("content", {
     type: String,

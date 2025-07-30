@@ -89,7 +89,10 @@
   import type { AllowDropType, NodeDropType, TreeNodeData} from 'element-plus/es/components/tree/src/tree.type'
   import type { FilterNodeMethodFunction, TreeInstance } from 'element-plus'
   import type Node from 'element-plus/es/components/tree/src/model/node'
-  import { isLogin as ApiIsLogin, ApiCategorySongList, ApiCategoryCreate, ApiCategoryDelete, ApiSongCreate, ApiSongDelete, ApiCategoryEdit, ApiSongEdit } from '@/tools/api'
+  import { isLogin as ApiIsLogin, ApiCategorySongList, 
+    ApiCategoryCreate, ApiCategoryEdit, ApiCategoryDelete, ApiCategoryEditOrderNums, 
+    ApiSongCreate, ApiSongDelete, ApiSongEdit, ApiSongEditOrderNums 
+  } from '@/tools/api'
   import LoginDrawer from '@/views/comp/LoginDrawer.vue'
   import ConfirmDialog from '@/views/comp/ConfirmDialog.vue'
   import Upload from '@/views/comp/UploadScore.vue'
@@ -157,11 +160,13 @@
   const titleEdit = async (node:Node, data:Tree) => {
     const api = node.level == 1 ? ApiCategoryEdit : ApiSongEdit
     const {score} = await api(node.data.id, {name:titleInput.value}).catch(alert)
-    successInfo()
     data.name = titleInput.value
     data.score = score
-    console.log(data.score)
     titleEditId.value = ""
+    if(node.level==1) {
+      data.songs?.map(x=>x.category=data.name)
+    }
+    successInfo()
   }
   const categoryShow = async (data: Tree) => {
     const is_show = data.is_show == 1 ? 0 :1;
@@ -178,8 +183,7 @@
       if(x.order_num > data.order_num) x.order_num += 1 
     })
     treeData.value.splice(index+1, 0, newChild);
-    treeData.value = [...treeData.value];
-    treeRef.value?.setCurrentKey(newChild.id);
+    setOrderNum()
   }
 
   const songAdd = async (node: Node, data: Tree) => {
@@ -188,26 +192,22 @@
     const newChild = await ApiSongCreate('新歌曲',category,newOrderNum).catch(alert);
     const children = node.level == 1 ? data.songs : node.parent?.data.songs
     const index = children.findIndex((x:Tree) => x.id === data.id)
-    children.map((x:Tree)=> {
-      if(x.order_num > data.order_num) x.order_num += 1 
-    })
     children.splice(index+1, 0 , newChild)
-    treeData.value = [...treeData.value]
+    setOrderNum(category)
     treeRef.value?.setCurrentKey(newChild.id)
   }
 
-  const isComfirm = true;
   const isShowDialog = ref(false)
   const dialogContent = ref('确认删除该目录或歌曲？')
   let dialogNode:Node | null = null
   const removeConfirm = (node: Node) => {
-    if(!isComfirm) return remove(node)
     dialogNode = node
     dialogContent.value = `确认删除【${node.label}】${node.level == 1 ?'及其下所有' : ''}？`
     isShowDialog.value = true
   }
 
   const remove = async (node: Node = dialogNode!!) => {
+    isShowDialog.value = false
     const children = node.level == 1 ? treeData.value : node.parent?.data.songs
     const api = node.level == 1 ? ApiCategoryDelete : ApiSongDelete
     await api(node.data.id).catch(alert)
@@ -216,21 +216,48 @@
     treeData.value = [...treeData.value]
     if(children.length) treeRef.value?.setCurrentKey(children[0].id)
     else treeRef.value?.setCurrentKey(node.parent?.id)
+    setOrderNum(node.data.category)
   }
 
   //拖拽:结束并成功
   const handleDrop = async (
     draggingNode: Node,
-    dropNode: Node,
-    dropType: NodeDropType
+    dropNode: Node
   ) => {
-    const condition = {
-      category: dropNode.data.category || dropNode.data.name, 
-      order_num: dropType != 'inner' && (
-        dropType=='before' ? dropNode.data.order_num : dropNode.data.order_num+1
-      ) || undefined
+    if(draggingNode.level == 1) {
+      const categorys = setOrderNum()
+      if(categorys) {
+        await ApiCategoryEditOrderNums(
+          categorys.ids,
+          categorys.order_nums
+        ).catch(alert)
+      }
+      return successInfo()
     }
-    await ApiSongEdit(draggingNode.data.id, condition);
+
+    const origin_category = draggingNode.data.category
+    const target_category = dropNode.data.category
+    const {ids, order_nums} = setOrderNum(target_category)
+
+    if(origin_category != target_category) {
+      const origins = setOrderNum(origin_category)
+      ids.push(...origins.ids)
+      order_nums.push(...origins.order_nums)
+      draggingNode.data.category = target_category
+      await ApiSongEdit(draggingNode.data.id, {category: target_category}).catch(alert)
+    }
+    await ApiSongEditOrderNums(ids, order_nums).catch(alert)
+    successInfo()
+    console.log("treeData:", treeData.value)
+  }
+
+  const setOrderNum = (category: string = ''):{ids:string[],order_nums:number[]} => {
+    const items = (category ? treeData.value.find(x=>x.name == category)?.songs : treeData.value) || []
+    items.forEach((x,i)=>x.order_num=i+1)
+    return {
+      ids: items.map(x=>x.id),
+      order_nums: items.map(x=>x.order_num)
+    }
   }
 
   //拖拽: 是否拖拽样式

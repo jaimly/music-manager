@@ -55,7 +55,7 @@ class Song extends Base {
             category,
             order_num: MoreThanOrEqual(order_num)
         }, {
-            order_num: () => `order_num${is_add?'+1':'-1'}`,
+            order_num: () => `order_num${is_add?'+1':'-1'}`
         } , manager);
     }
 }

@@ -76,14 +76,12 @@ cls.prototype.edit = async function (ctx) {
     await isPermission(ctx);
 
     const {body} = ctx.request;
-    const {id,name, order_num} = body;
+    const {id,name} = body;
+    delete body.order_num;
+
     const record = await Category.findOne({id});
-
+    
     return Category.connector.transaction(async manager => {
-        if(order_num && order_num != record.order_num) {
-            await Category.updateOrder(order_num, true, manager);
-        }
-
         if(name && name != record.name) {
             await Song.update({category: record.name}, {category: name}, manager);
         }
@@ -104,6 +102,37 @@ cls.prototype.edit.settings = {
                 "id": verifyFormat.minString
             }, cls.prototype.create.settings.params.body.properties),
             "required":["id"]
+        }
+    }
+};
+
+cls.prototype.editOrdernums = async function (ctx) {
+    await isPermission(ctx);
+    
+    const {ids,order_nums} = ctx.request.body;
+    return  Category.connector.transaction(async manager => {
+        let count = 0;
+        for (var i = 0; i < ids.length; i++) {
+            count += await Category.update({id: ids[i]},{order_num: order_nums[i]}, manager);
+        }
+        return count;
+    });
+}
+cls.prototype.editOrdernums.settings = {
+    params: {
+        is_filter: true,
+        body: {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": verifyFormat.minString
+                },
+                "order_nums": {
+                    "type": "array",
+                    "items": verifyFormat.positiveInt
+                }
+            },"required":["ids","order_nums"]
         }
     }
 };

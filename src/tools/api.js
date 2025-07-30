@@ -50,6 +50,14 @@ async function ApiSongEdit(id, condition) {
     return post("/song/edit",Object.assign({id}, condition));
 }
 
+async function ApiCategoryEditOrderNums(ids, order_nums) {
+    return post("/category/edit-ordernums",{ids, order_nums});
+}
+
+async function ApiSongEditOrderNums(ids, order_nums) {
+    return post("/song/edit-ordernums",{ids, order_nums});
+}
+
 async function ApiSongDetail(id, fields) {
     return get("/song/detail",{id,fields});
 }
@@ -193,6 +201,8 @@ export {
     ApiCategoryCreate,
     ApiCategoryEdit,
     ApiSongEdit,
+    ApiCategoryEditOrderNums,
+    ApiSongEditOrderNums,
     ApiSongDetail,
     ApiFileDelete,
     ApiFileUploadUrl,
