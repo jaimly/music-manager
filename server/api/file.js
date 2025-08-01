@@ -19,12 +19,14 @@ cls.prototype.list = async function (ctx) {
     await isPermission(ctx);
 
     const {body} = ctx.request;
-    body.fields = body.fields || 'id,name,category,path';
+    let fields = body.fields || 'id,name,category,path';
+    if(fields.includes('path')) fields += ',extend';
+    delete body.fields
     
     const sort = body.sort || {'created_at': -1};
     delete body.sort;
 
-    const back = await File.findByPage(body,null,sort);
+    const back = await File.findByPage(body,fields,sort);
     back.rows = back.rows.map(row => File.toFront(row));
     return back;
 };
@@ -36,9 +38,11 @@ cls.prototype.list.settings = {
             "properties": Object.assign({
                 "id": verifyFormat.minString,
                 "name": {"type": "string"},
+                "is_extend": {"enum": [0,1,2]}, // O:extend=0; 1:all; 2:extend!=0
+                "path": {"type": "string"},
                 "keyword": {"type": "string"},
                 "category": {"type": "string"},
-                "is_used": {"enum": [0,1,'0','1']},
+                "is_used": {"enum": [0,1]},
                 "fields": {"type": "string"},
                 "sort": {"type": "object"}
             },verifyFormat.page),
@@ -50,11 +54,12 @@ cls.prototype.list.settings = {
 cls.prototype.upload = async function (ctx) {
     const {id: user_id, account} = await isPermission(ctx);
 
-    let {files, category, name, id} = ctx.request.body;
+    let {files, category, name, id, extend} = ctx.request.body;
+    extend = Number(extend) || 0;
     if(files.constructor == Object) files = [files];
     if(id) {
         files = files.slice(0,1);
-        await File.isReferred({id});
+        if(!extend) await File.isReferred({id});
     }
 
     const saves = files.map(({file:{path,type,size,name:file_name}}) => {
@@ -62,6 +67,7 @@ cls.prototype.upload = async function (ctx) {
         const model = File.toModel({
             id,
             name: name || f_name,
+            extend,
             ext,
             size,
             type,
@@ -69,7 +75,7 @@ cls.prototype.upload = async function (ctx) {
             creator_id: user_id,
             creator_name: account
         })
-        const file_path = File.toFilePath(model.path);
+        const file_path = File.toFilePath(model.path, extend);
         File.mkdirs(Path.dirname(file_path));
         Fs.copyFileSync(path, file_path);
         return model;
@@ -90,6 +96,7 @@ cls.prototype.upload.settings = {
                 "category": {
                     "enum": Object.values(FILE_TYPE)
                 },
+                "extend": verifyFormat.integer_format,
                 "files": {
                     "type": "object",
                     "properties": {
@@ -114,6 +121,8 @@ cls.prototype.update = async function (ctx) {
 
     const {path, files:{file}} = ctx.request.body;
     const origin_db_path = File.toDbPath(path);
+    await File.findOne({path: origin_db_path});
+
     const origin_file_path = File.toFilePath(origin_db_path);
     const {type, size, name:file_name, path:temp_path} = file;
     const ext = Path.extname(file_name);
@@ -152,7 +161,9 @@ cls.prototype.delete = async function (ctx) {
     const records = await File.list(condition,'id,path');
     const paths = records.map(x=>x.path);
     
-    return File.deleteByPath(paths);
+    await File.connector.transaction(async manager => {
+        return File.deleteByPath(paths, manager);
+    });
 };
 cls.prototype.delete.settings = {
     params: {

@@ -34,7 +34,14 @@ const schema = {
             length: 255,
             nullable: false,
             default: "",
-            comment: "图谱路径"
+            comment: "歌谱路径"
+        },
+        is_extend: {
+            type: "tinyint",
+            unsigned: true,
+            nullable: false,
+            default: 0,
+            comment: "歌谱是否多页"
         },
         lyrics: {
             type: "varchar",

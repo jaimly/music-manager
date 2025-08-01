@@ -13,7 +13,7 @@
       :default-expanded-keys="[treeData[0]?.id]"
       :accordion="!isLogin()"
       empty-text="无数据"
-      draggable
+      :draggable="isLogin()"
       ref="treeRef"
       node-key="id"
       icon = "a"
@@ -51,7 +51,8 @@
                 :btnName="isLogin()?'谱':'歌谱'" btnType="info" :isBtnLink="true" @click.stop
                 :name="data.name" :id="data.id" :path="data.score"
                 :onSuccess="(score:string) => data.score = score"/>
-              <router-link :to="{ name: 'Score', state: {song: {id: data.id, name: data.name, score: data.score}}}" 
+              <router-link :to="{ name: 'Score', state: {song: {
+                          id: data.id, name: data.name, score: data.score, is_extend: data.is_extend }}}" 
                     v-if="node.level!=1 && data.score" @click.stop>
                 <el-text type="primary">{{ isLogin()?'':'歌' }}谱</el-text>
               </router-link>
@@ -105,6 +106,7 @@
     category?: string,
     is_show?: number,
     is_lyrics?: number,
+    is_extend?: number,
     score?: string,
     songs?: Tree[]
   }

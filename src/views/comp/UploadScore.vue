@@ -1,12 +1,12 @@
 <template>
     <el-upload
-      :action="path?ApiFileUpdateUrl():ApiFileUploadUrl()"
+      :action="(!path || extend)?ApiFileUploadUrl():ApiFileUpdateUrl()"
       accept = '.jpg,.jpeg,.png'
       :limit="1"
       :show-file-list = "false"
       :auto-upload = "true"
       :headers="{'password': password}"
-      :data="{id, name, category:'score', path}"
+      :data="{id, name, category:'score', path, extend}"
       :on-success = "onSuccessBefore"
       :on-error = "onError"
       :before-upload = "() => {
@@ -41,6 +41,9 @@
   const path = defineModel("path", {
     type: String
   })
+  const extend = defineModel("extend", {
+    type: Number
+  })
   const btnName = defineModel("btnName", {
     type: String,
     default: '更换'
@@ -61,32 +64,35 @@
   })
 
   const onSuccessBefore = async (res: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
-    uploadFiles.splice(0,1)
-    btnDisabled.value = false;
+    reset(uploadFiles)
     if(res.ok) return alert(res)
-    console.log(res.data)
+
     const score = res.data?.path
-    if(!path.value) {
-      await ApiSongEdit(id.value, {score}).catch(async (err: ApiBackInfo) => {
-        await ApiFileDelete(res.data?.id)
-        return alert(err)
-      })
-      path.value = score
-    }
+    const condition = extend.value ? {is_extend: 1} : {score}
+    await ApiSongEdit(id.value, condition).catch(async (err: ApiBackInfo) => {
+      await ApiFileDelete(res.data?.id)
+      return alert(err)
+    })
+
+    path.value = score
+    onSuccess.value && onSuccess.value(score)
     ElMessage({
       message: `更新成功！`,
       type: 'success'
     })
-    onSuccess.value && onSuccess.value(score)
   }
 
   const onError = (error: Error, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
-    uploadFiles.splice(0,1)
-    btnDisabled.value = false;
+    reset(uploadFiles)
     console.trace(error);
     alert({
-      msg: `上传失败：${name}`
+      msg: `上传失败：${name.value}`
     })
+  }
+
+  const reset = (uploadFiles: UploadFiles) => {
+    uploadFiles.splice(0,1)
+    btnDisabled.value = false;
   }
   
   interface ApiBackInfo {
@@ -94,7 +100,7 @@
     msg: string,
     data?: any
   }
-  function alert(err: ApiBackInfo) {
+  async function alert(err: ApiBackInfo) {
     ElMessage({
       message: err.msg,
       type: 'error'

@@ -7,7 +7,7 @@ async function ApiCategorySongList() {
     if(category_back.total_count === 0) return [];
 
     const categorys = category_back.rows;
-    const song_back = await ApiSongList({per_page: -1, fields:'id,name,category,order_num,score,is_lyrics'});
+    const song_back = await ApiSongList({per_page: -1, fields:'id,name,category,order_num,score,is_extend,is_lyrics'});
     const songs = song_back.rows;
 
     return categorys.map(category => {
@@ -60,6 +60,10 @@ async function ApiSongEditOrderNums(ids, order_nums) {
 
 async function ApiSongDetail(id, fields) {
     return get("/song/detail",{id,fields});
+}
+
+async function ApiFileList(condition) {
+    return post("/file/list", condition);
 }
 
 async function ApiFileDelete(id) {
@@ -205,6 +209,7 @@ export {
     ApiSongEditOrderNums,
     ApiSongDetail,
     ApiFileDelete,
+    ApiFileList,
     ApiFileUploadUrl,
     ApiFileUpdateUrl,
     globalError

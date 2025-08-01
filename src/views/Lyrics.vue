@@ -3,7 +3,7 @@
         <el-input type="textarea" v-model="lyrics" resize="none" 
             :autosize="isLogin()"
             :readonly="!isLogin()"
-            :class="!isLogin() ? 'view' : ''" />
+            :class="!isLogin() ? 'view' : 'area'" />
         <el-button v-if="isLogin()" type="primary" @click="save">保存</el-button>
         <router-link :to="{ name: 'Index' }" >
             <el-button class="global-float-button" type="warning">返回</el-button>
@@ -60,13 +60,17 @@
     flex-direction: column;
     align-items: center;
     gap:10px;
-
     .view {
         &:deep(.el-textarea__inner) {
             background-color: rgba(0, 0, 0, 0);
             box-shadow: none;
             height: calc(~"100vh - 10px") !important;
         }
+    }
+    .area {
+      &:deep(.el-textarea__inner) {
+        height: calc(~"100vh - 55px") !important;
+      }
     }
 }
 

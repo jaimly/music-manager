@@ -113,9 +113,8 @@ cls.prototype.create.settings = {
                 "name": verifyFormat.minString,
                 "is_show": {"enum": [0,1]},
                 "category": {"type": "string"},
-                "order_num": verifyFormat.positiveInt,
+                "order_num": {"type":"integer", "minimum": 1},
                 "score": {"type": "string"},
-                "score_num": verifyFormat.positiveInt,
                 "lyrics": {"type": "string"}
             },"required":["name","category","order_num"]
         }
@@ -127,7 +126,7 @@ cls.prototype.edit = async function (ctx) {
 
     let {body} = ctx.request;
     if(body.score) body.score = File.toDbPath(body.score);
-    const {id,name,score} = body;
+    const {id,name,score,is_extend} = body;
     delete body.order_num;
 
     const record = await Song.findOne({id});
@@ -146,6 +145,10 @@ cls.prototype.edit = async function (ctx) {
             if(record.score) await File.deleteByPath(record.score);
             await File.updateByPath(score,{is_used: 1}, manager);
         }
+
+        if((is_extend === 0) && (record.is_extend == 1)) {
+            await File.deleteExtendPath(record.score, manager);
+        }
         
         await Song.update({id},Object.assign({
             updated_at: Date.now()
@@ -160,7 +163,8 @@ cls.prototype.edit.settings = {
         body: {
             "type": "object",
             "properties": Object.assign({
-                "id": verifyFormat.minString
+                "id": verifyFormat.minString,
+                "is_extend": {"enum": [0,1]},
             }, cls.prototype.create.settings.params.body.properties),
             "required":["id"]
         }

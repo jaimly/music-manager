@@ -29,6 +29,12 @@ const schema = {
             default: "",
             comment: "路径"
         },
+        extend: {
+            type: "int",
+            nullable: false,
+            default: 0,
+            comment: "路径页码"
+        },
         is_used: {
             type: "tinyint",
             unsigned: true,
@@ -37,10 +43,9 @@ const schema = {
             comment: "是否被使用"
         },
         size: {
-            type: "varchar",
-            length: 255,
+            type: "bigint",
+            unsigned: true,
             nullable: false,
-            default: "",
             comment: "大小"
         },
         type: {
@@ -65,9 +70,11 @@ const schema = {
         }
     },
     indices: [{
-        "category": "IDX_STATUS", "columns": ["category"]
+        "category": "IDX_CATEGORY", "columns": ["category"]
     }, {
-        "is_used": "IDX_STATUS", "columns": ["is_used"]
+        "path": "IDX_PATH", "columns": ["path"]
+    }, {
+        "is_used": "IDX_IS_USED", "columns": ["is_used"]
     }]
 };
 
