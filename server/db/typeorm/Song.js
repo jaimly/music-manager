@@ -45,7 +45,7 @@ const schema = {
         },
         lyrics: {
             type: "varchar",
-            length: 255,
+            length: 500,
             nullable: false,
             default: "",
             comment: "歌词"
