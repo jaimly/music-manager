@@ -1,5 +1,5 @@
 'use strict';
-const {ENV: {MYSQL_HOST,MYSQL_USER,MYSQL_PASSWORD}} = require('./config');
+const {ENV: {MYSQL_HOST,MYSQL_USER,MYSQL_PASSWORD,DATABASE_NAME}} = require('./config');
 
 module.exports = {
     http : {
@@ -37,7 +37,7 @@ module.exports = {
                     port: '3306',
                     username: MYSQL_USER,
                     password: MYSQL_PASSWORD,
-                    database: 'music_manager',
+                    database: DATABASE_NAME,
                     synchronize: true,
                     supportBigNumbers: false,
                     logging: true

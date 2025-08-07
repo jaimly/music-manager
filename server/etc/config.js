@@ -6,7 +6,8 @@ module.exports = {
         NODE_ENV: process.env.NODE_ENV || 'dev',
         MYSQL_HOST: process.env.MYSQL_HOST || '',
         MYSQL_USER: process.env.MYSQL_USER || 'root',
-        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || ''
+        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD || '',
+        DATABASE_NAME: process.env.DATABASE_NAME || 'music_manager'
     },
     FILE_TYPE: {
         SCORE: 'score'
