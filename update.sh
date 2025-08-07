@@ -66,7 +66,7 @@ if [ $Host ]; then
 fi
 
 # 复制初始资源
-\cp -rf res/* /home/www/${Project}
+\cp -rf res /home/www/${Project}
 # 停止并删除容器
 docker rm -f ${Project}
 # 删除镜像
