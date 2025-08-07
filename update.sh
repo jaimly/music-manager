@@ -2,18 +2,27 @@
 
 # 预备 git、docker 命令
 
-# 下载带用户名和密码的链接
-# git clone https://jaimly:[密码]@gitee.com/jaimly/auto-parts
-# git remote set-url origin https://jaimly:[密码]@gitee.com/jaimly/auto-parts
+# 下载代码
+# git clone https://gitee.com/jaimly/music-manager.git
 
 Project=music-manager
+DbName=music_manager
 
 # 设置项目名、端口
-read -p "请输入端口:" Port
-read -p "请输入域名:" Host
-read -p "请输入数据库用户:" MYSQL_USER
-read -p "请输入数据库密码:" MYSQL_PASSWORD
-read -p "是否build前端文件:" IS_BUILD # build耗内存太大，可能会卡死
+read -p "端口:" Port
+read -p "项目名后缀(可留空):" PROJECT_EXT
+read -p "是否build前端文件(build填1):" IS_BUILD # build耗内存太大，可能会卡死
+read -p "域名(留空即不更改Dockerfile):" Host
+if [ $Host ]; then
+    read -p "数据库用户:" MYSQL_USER
+    read -p "数据库密码:" MYSQL_PASSWORD
+fi
+
+
+if [ $PROJECT_EXT ]; then
+    Project=${Project}-$PROJECT_EXT
+    DbName=${DbName}_$PROJECT_EXT
+fi
 
 # 更新代码
 git pull origin master
@@ -30,7 +39,7 @@ rm -rf package.json1
 echo "npm成功"
 
 # 判断是否需要build前端
-if [[ $IS_BUILD == 1 ]]; then
+if [ $IS_BUILD == 1 ]; then
     npm run build
     echo "build前端成功"
 fi
@@ -43,11 +52,12 @@ if [ $Host ]; then
         FILE_SEVER=$Host:$Port
     fi
     rm -rf Dockerfile
-    echo "FROM node:18" >> Dockerfile
+    echo "FROM node:22" >> Dockerfile
     echo "ENV NODE_ENV prod" >> Dockerfile
     echo "ENV MYSQL_HOST $Host" >> Dockerfile
     echo "ENV MYSQL_USER $MYSQL_USER" >> Dockerfile
     echo "ENV MYSQL_PASSWORD $MYSQL_PASSWORD" >> Dockerfile
+    echo "ENV DATABASE_NAME ${DbName}" >> Dockerfile
     echo "ENV FILE_SEVER http://$FILE_SEVER/res" >> Dockerfile
     echo "WORKDIR /app" >> Dockerfile
     echo "COPY . /app/" >> Dockerfile
